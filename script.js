@@ -32,14 +32,12 @@ function pick(arr) {
 // 1. 데이터베이스
 // ==========================================
 
-// [NEW] 카페 메뉴 (랜덤 출력용)
 const cafeMenus = [
     "아이스 아메리카노", "따뜻한 카페라떼", "바닐라 빈 라떼", "카라멜 마키아또", 
     "자몽 에이드", "얼그레이 티", "초코 스콘", "바스크 치즈 케이크", "크로플", 
     "페퍼민트 티", "딸기 라떼", "콜드브루", "말차 라떼", "레몬 마들렌", "허니브레드"
 ];
 
-// [NEW] 카페 이용 로그 (직업 행동 아님, 힐링용)
 const cafeConsumerLogs = [
     (n, m) => `${n}님이 주문한 ${m}를 한 모금 마십니다.`,
     (n, m) => `${n}님이 ${m}의 얼음을 빨대로 휘휘 젓습니다.`,
@@ -59,7 +57,6 @@ const weatherDB = {
     "Typhoon": "거센 비바람이 몰아칩니다."
 };
 
-// [설정] 직업별 스탯
 const jobConfig = {
     "대학생": { statName: "평점(GPA)", init: 3.0 },
     "대학원생": { statName: "연구진척도", init: 30 },
@@ -87,7 +84,6 @@ const jobConfig = {
     "유튜버": { statName: "구독자", init: 10000 }
 };
 
-// [로그] 직업 행동
 const jobActions = {
     "대학생": ["전공 서적을 펴고 턱을 굅니다.", "강의 녹음을 다시 듣습니다.", "시험 범위를 체크합니다."],
     "대학원생": ["논문 초안을 붉은 펜으로 수정합니다.", "통계 결과를 멍하니 봅니다.", "교수님 메일을 확인합니다."],
@@ -120,7 +116,6 @@ const mbtiActions = {
     "E": ["직원에게 밝게 인사합니다.", "주변을 두리번거립니다.", "다리를 떨며 리듬을 탑니다."]
 };
 
-// [로그] 관계/상태
 const interactionDB = {
     friend: [ (a,b)=>`${josa(a.name,"과/와")} ${b.name}님이 엽기 사진을 찍으며 놉니다.`, (a,b)=>`두 사람이 맛집을 검색합니다.` ],
     lover: [ (a,b)=>`${a.name}님이 ${b.name}님의 손을 잡습니다.`, (a,b)=>`서로 꿀 떨어지는 눈빛을 보냅니다.` ],
@@ -182,7 +177,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function initUI() {
     updateHeaderDisplay();
-    addRawLog(null, "SYSTEM", "시뮬레이터 준비 완료. 캐릭터를 추가하세요.");
+    addRawLog(null, "SYSTEM", "손님을 추가해주세요.");
 }
 
 // === 4. 캐릭터 생성 ===
@@ -439,7 +434,7 @@ function createLogAtTime(timeStr) {
 
     let action = "";
     let type = "";
-    if(Math.random() < 0.5) { // 직업 행동 비율
+    if(Math.random() < 0.5) {
         const logs = jobActions[c.job] || ["열심히 할 일을 합니다."];
         action = pick(logs);
         type = "JOB";
@@ -814,4 +809,5 @@ function importData(e) {
     };
     if(e.target.files[0]) r.readAsText(e.target.files[0]);
     e.target.value = '';
+
 }
