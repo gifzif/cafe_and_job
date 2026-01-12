@@ -32,12 +32,14 @@ function pick(arr) {
 // 1. 데이터베이스
 // ==========================================
 
+// [NEW] 카페 메뉴 (랜덤 출력용)
 const cafeMenus = [
     "아이스 아메리카노", "따뜻한 카페라떼", "바닐라 빈 라떼", "카라멜 마키아또", 
     "자몽 에이드", "얼그레이 티", "초코 스콘", "바스크 치즈 케이크", "크로플", 
     "페퍼민트 티", "딸기 라떼", "콜드브루", "말차 라떼", "레몬 마들렌", "허니브레드"
 ];
 
+// [NEW] 카페 이용 로그 (직업 행동 아님, 힐링용)
 const cafeConsumerLogs = [
     (n, m) => `${n}님이 주문한 ${m}를 한 모금 마십니다.`,
     (n, m) => `${n}님이 ${m}의 얼음을 빨대로 휘휘 젓습니다.`,
@@ -57,6 +59,7 @@ const weatherDB = {
     "Typhoon": "거센 비바람이 몰아칩니다."
 };
 
+// [설정] 직업별 스탯
 const jobConfig = {
     "대학생": { statName: "평점(GPA)", init: 3.0 },
     "대학원생": { statName: "연구진척도", init: 30 },
@@ -84,6 +87,7 @@ const jobConfig = {
     "유튜버": { statName: "구독자", init: 10000 }
 };
 
+// [로그] 직업 행동
 const jobActions = {
     "대학생": ["전공 서적을 펴고 턱을 굅니다.", "강의 녹음을 다시 듣습니다.", "시험 범위를 체크합니다."],
     "대학원생": ["논문 초안을 붉은 펜으로 수정합니다.", "통계 결과를 멍하니 봅니다.", "교수님 메일을 확인합니다."],
@@ -116,6 +120,7 @@ const mbtiActions = {
     "E": ["직원에게 밝게 인사합니다.", "주변을 두리번거립니다.", "다리를 떨며 리듬을 탑니다."]
 };
 
+// [로그] 관계/상태
 const interactionDB = {
     friend: [ (a,b)=>`${josa(a.name,"과/와")} ${b.name}님이 엽기 사진을 찍으며 놉니다.`, (a,b)=>`두 사람이 맛집을 검색합니다.` ],
     lover: [ (a,b)=>`${a.name}님이 ${b.name}님의 손을 잡습니다.`, (a,b)=>`서로 꿀 떨어지는 눈빛을 보냅니다.` ],
@@ -177,7 +182,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function initUI() {
     updateHeaderDisplay();
-    addRawLog(null, "SYSTEM", "손님을 추가해주세요.");
+    addRawLog(null, "SYSTEM", "시뮬레이터 준비 완료. 캐릭터를 추가하세요.");
 }
 
 // === 4. 캐릭터 생성 ===
@@ -434,7 +439,7 @@ function createLogAtTime(timeStr) {
 
     let action = "";
     let type = "";
-    if(Math.random() < 0.5) {
+    if(Math.random() < 0.5) { // 직업 행동 비율
         const logs = jobActions[c.job] || ["열심히 할 일을 합니다."];
         action = pick(logs);
         type = "JOB";
@@ -666,8 +671,15 @@ function createCard(c, isActive) {
     const div = document.createElement('div');
     div.className = `guest-card ${isActive ? 'active' : 'inactive'}`;
     let status = isActive ? "방문중" : "미방문";
-    if(c.status === 'burnout') { status = "번아웃"; div.style.backgroundColor = "#fff3e0"; }
-    else if(c.status === 'slump') { status = "슬럼프"; div.style.backgroundColor = "#eceff1"; }
+    
+    if(c.status === 'burnout') { 
+        status = "번아웃"; 
+        div.style.backgroundColor = "#fff3e0"; 
+    }
+    else if(c.status === 'slump') { 
+        status = "슬럼프"; 
+        div.style.backgroundColor = "#eceff1"; 
+    }
 
     const r = relationships.find(r => r.from === c.id && r.type === 'crush');
     let crushLine = "";
@@ -681,7 +693,8 @@ function createCard(c, isActive) {
     else valStr = Math.floor(valStr);
 
     div.innerHTML = `
-        <div>
+        <div style="position:relative;">
+            <button onclick="deleteChar('${c.id}')" style="position:absolute; right:-5px; top:-5px; border:none; background:none; cursor:pointer; font-size:10px; color:#999; font-weight:bold;">✕</button>
             <span class="g-name">${c.name}</span>
             <div class="g-detail">${c.job} · ${c.mbti} · <span style="color:#4caf50;">${c.stats.name}: ${valStr}</span></div>
             ${crushLine}
@@ -690,7 +703,20 @@ function createCard(c, isActive) {
     `;
     return div;
 }
+function deleteChar(id) {
+    
+    const target = getChar(id);
+    const name = target ? target.name : "캐릭터";
 
+    characters = characters.filter(c => c.id !== id);
+    relationships = relationships.filter(r => r.from !== id && r.to !== id);
+
+    simState.visitors = simState.visitors.filter(v => v !== id);
+    
+    renderNodes(); 
+    renderList();
+    addRawLog(null, "SYSTEM", `${name}님이 데이터에서 삭제되었습니다.`);
+}
 function renderNodes() {
     const layer = document.getElementById('nodes-layer');
     layer.innerHTML = '';
@@ -765,13 +791,41 @@ function renderGraphEdges() {
 
 function handleNodeClick(id) {
     const tool = document.querySelector('input[name="tool"]:checked').value;
+    
     if(tool === 'select') {
         const c = getChar(id);
         addRawLog(null, "SYSTEM", `${c.name} (${c.job}) 정보를 확인했습니다.`);
         return;
     }
+    
+    if(tool === 'delete') {
+        simState.clickStack.push(id);
+        document.getElementById(`node-${id}`).classList.add('selected');
+        
+        if(simState.clickStack.length === 2) {
+            const [from, to] = simState.clickStack;
+            if(from !== to) {
+                const initialLen = relationships.length;
+                relationships = relationships.filter(r => !((r.from===from && r.to===to) || (r.from===to && r.to===from)));
+                
+                if(relationships.length < initialLen) {
+                    addRawLog(null, "SYSTEM", `${getChar(from).name}와(과) ${getChar(to).name}의 관계를 끊었습니다 ✂️`);
+                } else {
+                    addRawLog(null, "SYSTEM", "두 사람 사이에는 끊을 관계가 없습니다.");
+                }
+                renderGraphEdges();
+            }
+            setTimeout(() => {
+                document.querySelectorAll('.node').forEach(n => n.classList.remove('selected'));
+                simState.clickStack = [];
+            }, 200);
+        }
+        return;
+    }
+
     simState.clickStack.push(id);
     document.getElementById(`node-${id}`).classList.add('selected');
+    
     if(simState.clickStack.length === 2) {
         const [from, to] = simState.clickStack;
         if(from !== to) {
@@ -780,7 +834,7 @@ function handleNodeClick(id) {
                 relationships.push({from, to, type: 'crush'});
             } else {
                 relationships = relationships.filter(r => !((r.from===from && r.to===to) || (r.from===to && r.to===from)));
-                // 연인 초기값 mood: sweet
+                
                 const newRel = {from, to, type: tool};
                 if(tool === 'lover') newRel.mood = 'sweet';
                 relationships.push(newRel);
@@ -788,6 +842,7 @@ function handleNodeClick(id) {
             renderGraphEdges();
             addRawLog(null, "SYSTEM", `${getChar(from).name} ↔ ${getChar(to).name} (${tool}) 설정됨`);
         }
+        
         setTimeout(() => {
             document.querySelectorAll('.node').forEach(n => n.classList.remove('selected'));
             simState.clickStack = [];
@@ -809,5 +864,4 @@ function importData(e) {
     };
     if(e.target.files[0]) r.readAsText(e.target.files[0]);
     e.target.value = '';
-
 }
