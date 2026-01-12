@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cafe Simulator</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.8/dist/web/static/pretendard.css" />
+</head>
+<body>
+    <div id="app">
+        <header class="header">
+            <div class="header-left">
+                <h1 class="logo">☕ CAFE SIMULATOR</h1>
+            </div>
+            
+            <div class="header-center">
+                <div class="date-box">
+                    <span id="season-display">SPRING</span>
+                    <span class="divider">/</span>
+                    <span id="day-display">MON</span>
+                </div>
+                <button id="play-btn">시간 흐름 (PLAY)</button>
+            </div>
+
+            <div class="header-right">
+                <button id="add-char-btn" class="brown-btn">손님 추가</button>
+                <button id="export-btn" class="brown-btn">저장</button>
+                <label for="import-file" class="brown-btn">불러오기</label>
+                <input type="file" id="import-file" accept=".json" hidden>
+            </div>
+        </header>
+
+        <main class="main-grid">
+            <section class="panel left-panel">
+                <h2 class="panel-title">CHARACTER LIST</h2>
+                <div id="visitor-list" class="scroll-content">
+                    <div class="empty-msg">데이터 없음</div>
+                </div>
+            </section>
+
+            <section class="panel center-panel">
+                <h2 class="panel-title">RELATIONSHIP GRAPH</h2>
+                <div class="graph-wrapper">
+                    <svg id="graph-svg">
+                        <defs>
+                            <marker id="arrow-end" markerWidth="10" markerHeight="7" refX="28" refY="3.5" orient="auto">
+                                <polygon points="0 0, 10 3.5, 0 7" fill="#ffd43b" />
+                            </marker>
+                            <marker id="arrow-start" markerWidth="10" markerHeight="7" refX="-18" refY="3.5" orient="auto">
+                                <polygon points="10 0, 0 3.5, 10 7" fill="#ffd43b" />
+                            </marker>
+                        </defs>
+                    </svg>
+                    <div id="nodes-layer"></div>
+                </div>
+                
+                <div class="relation-controls">
+                    <div class="tool-selector">
+                        <label><input type="radio" name="tool" value="select" checked> <span>선택</span></label>
+                        <label><input type="radio" name="tool" value="friend"> <span class="dot friend"></span>친구</label>
+                        <label><input type="radio" name="tool" value="lover"> <span class="dot lover"></span>연인</label>
+                        <label><input type="radio" name="tool" value="family"> <span class="dot family"></span>가족</label>
+                        <label><input type="radio" name="tool" value="coworker"> <span class="dot coworker"></span>동료</label>
+                        <label><input type="radio" name="tool" value="crush"> <span class="dot crush"></span>짝사랑</label>
+                    </div>
+                </div>
+            </section>
+
+            <section class="panel right-panel">
+                <h2 class="panel-title">LIVE LOGS</h2>
+                <div class="log-wrapper">
+                    <div id="log-list">
+                        </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <dialog id="char-modal">
+        <form method="dialog" id="char-form">
+            <h3>새로운 손님 입장</h3>
+            <div class="form-group">
+                <label>이름</label>
+                <input type="text" id="input-name" required placeholder="이름입력">
+            </div>
+            <div class="form-group">
+    <label>직업</label>
+    <select id="input-job">
+        <optgroup label="학업/준비">
+                <option value="대학생">대학생</option>
+                <option value="대학원생">대학원생</option>
+                <option value="취준생">취준생</option>
+                <option value="공시생">공시생</option>
+                <option value="교환학생">교환학생 준비</option>
+                <option value="로스쿨준비생">로스쿨 준비</option>
+                <option value="의대장수생">의대 N수생</option>
+            </optgroup>
+            <optgroup label="직장/노동">
+                <option value="직장인">직장인</option>
+                <option value="계약직">계약직</option>
+                <option value="아르바이트">아르바이트</option>
+                <option value="자영업자">자영업자</option>
+                <option value="심야작업자">심야 작업자</option>
+            </optgroup>
+            <optgroup label="창작/프리랜서">
+                <option value="프리랜서">프리랜서</option>
+                <option value="작가">작가</option>
+                <option value="인플루언서">인플루언서</option>
+                <option value="웹툰지망생">웹툰 지망생</option>
+                <option value="커미션러">일러스트 작가</option>
+                <option value="성우지망생">성우 지망생</option>
+            </optgroup>
+            <optgroup label="라이프스타일">
+                <option value="백수">백수</option>
+                <option value="갭이어">갭이어</option>
+            </optgroup>
+        </select>
+    </div>
+            <div class="form-group">
+                <label>MBTI</label>
+                <div class="mbti-grid">
+                    <select id="input-mbti-ei"><option value="I">I (내향)</option><option value="E">E (외향)</option></select>
+                    <select id="input-mbti-sn"><option value="S">S (감각)</option><option value="N">N (직관)</option></select>
+                    <select id="input-mbti-tf"><option value="T">T (사고)</option><option value="F">F (감정)</option></select>
+                    <select id="input-mbti-jp"><option value="J">J (판단)</option><option value="P">P (인식)</option></select>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button type="button" id="cancel-btn">취소</button>
+                <button type="submit" class="primary-btn">등록</button>
+            </div>
+        </form>
+    </dialog>
+
+    <script src="script.js"></script>
+</body>
+</html>
